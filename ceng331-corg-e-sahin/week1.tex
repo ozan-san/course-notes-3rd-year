@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
 \usepackage{amssymb}
+\usepackage{amsmath}
 \usepackage{color}
 \usepackage{listings}
 \definecolor{mygreen}{rgb}{0,0.3,0}
@@ -140,5 +141,30 @@ End  & \ms{$B$}                         & \ms{$A$}                         \\ \h
 \end{center}
 With bit operations, we have saved on some storage. \textit{Yay.}
 \subsubsection{Shifting}
+We can shift the bits in a variable. Left shift operations replace the missing bits by 0's, whereas right shift operations may or may not do that, depending on the Most Significant Bit (this is done for not losing the sign information located mainly on MSB).\\
+\begin{center}
+\begin{table}[ht!]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+Operation        & \ms{01100010} & \ms{10100010} \\ \hline
+$<<3$            & \ms{00010000} & \ms{00010000} \\ \hline
+Log. $>>2$       & \ms{00011000} & \ms{00101000} \\ \hline
+Arithmetic $>>2$ & \ms{00011000} & \ms{11101000} \\ \hline
+\end{tabular}
+\end{table}
+\end{center}
+\subsection{Encoding integers}
+We define two functions to interpret the meaning of a binary variable $x$ depending on the type (whether it is \ms{unsigned} or not).\\
+For \ms{unsigned}:\\
+\begin{equation*}
+B2U_{w}(x) = \sum_{i=0}^{w-1} x_i 2^i 
+\end{equation*}
+For signed \ms{int} (will be called as Two's Complement, or ``T"):\\
+\begin{equation*}
+B2T_{w}(x) = -x_{w-1}2^{w-1} + \sum_{i=0}^{w-2} x_i 2^i 
+\end{equation*}
+
+
 
 \end{document}
