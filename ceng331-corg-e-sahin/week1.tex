@@ -1,14 +1,144 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
-
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage{listings}
+\definecolor{mygreen}{rgb}{0,0.3,0}
+\definecolor{mygray}{rgb}{0.3,0.3,0.3}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+\newcommand{\ms}[1]{\texttt{#1}} 
 \title{CENG331 - Computer Organization Course Notes}
 \author{Ozan Şan}
 \date{\today}
-
+\lstset{ %
+  backgroundcolor=\color{white},   % choose the background color
+  basicstyle=\footnotesize,        % size of fonts used for the code
+  breaklines=true,                 % automatic line breaking only at whitespace
+  captionpos=b,                    % sets the caption-position to bottom
+  commentstyle=\color{mygreen},    % comment style
+  escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
+  keywordstyle=\color{blue},       % keyword style
+  stringstyle=\color{mymauve},     % string literal style
+}
 \begin{document}
 
 \maketitle
 
-\section{Introduction}
+\section{Bits}
+
+A common misconception: \\
+$int = \mathbb{Z}$ and, $float = \mathbb{R}$ .\\
+
+For the case of \textit{int}, $x^{2} < 0$ can happen. \\
+
+For the case of \textit{float}s, $(x+y)+z \neq x+(y+z)$ is possible. Commutativity is not guaranteed.
+
+\subsection{How is a C code compiled?}
+
+\subsubsection{Preprocessor}
+\begin{table}[ht!]
+\centering
+\begin{tabular}{lll}
+\cline{2-2}
+\multicolumn{1}{l|}{$\rightarrow$} & \multicolumn{1}{l|}{Preprocessor (cpp)} & $\rightarrow$       \\ \cline{2-2}
+\texttt{hello.c}                &                        & \texttt{hello.i}
+\end{tabular}
+\end{table}
+
+In this stage, \texttt{\#include} and \texttt{\#define} statements are processed. This happens, for example, for \texttt{\#include}, a file is copied to the beginning of \texttt{hello.c} and \texttt{\#define} macros are replaced in-place.
+
+
+\subsubsection{Compiler}
+\begin{table}[ht!]
+\centering
+\begin{tabular}{lll}
+\cline{2-2}
+\multicolumn{1}{l|}{$\rightarrow$} & \multicolumn{1}{l|}{Compiler (cc1)} & $\rightarrow$       \\ \cline{2-2}
+\texttt{hello.i}               &                        & \texttt{hello.s (ASM)}
+\end{tabular}
+\end{table}
+
+In this stage, the c code without preprocessor stages passes through a compiler and results in an Assembly code block. This does not have the necessary functions in it (for example, \texttt{printf}).
+\vspace{10px}
+
+\subsubsection{Assembler}
+Here is the assembler in action: \\
+\begin{center}
+\begin{table}[ht!]
+\centering
+\begin{tabular}{lll}
+\cline{2-2}
+\multicolumn{1}{l|}{$\rightarrow$} & \multicolumn{1}{l|}{Assembler (as)} & $\rightarrow$       \\ \cline{2-2}
+\texttt{hello.s}               &                        & \texttt{hello.o}
+\end{tabular}
+\end{table}
+\end{center}
+In this stage, Assembler takes in the Assembly code, and produces an almost-executable intermediate \textbf{Object file}. This \textbf{Object file} does not have any externally defined functions in it yet.
+
+\subsubsection{Linker}
+Here is the linker in action: \\
+\begin{center}
+\begin{table}[ht!]
+\centering
+\begin{tabular}{lll}
+\texttt{printf.o} $\searrow$                        &                             &                             \\ \cline{2-2}
+\multicolumn{1}{l|}{\texttt{hello.o} $\rightarrow$} & \multicolumn{1}{l|}{Linker} &$\rightarrow$ \texttt{hello} (executable) \\ \cline{2-2}
+\end{tabular}
+\end{table}
+
+At the end, we have an executable in our hands. \textit{Yay.}
+\end{center}
+
+\subsection{Bit Operations}
+\subsubsection{Representing sets as bits}
+
+Take, for example, the set $S_1 = \{0,3,5,6\}$. We can cram this set into a byte, as this: \texttt{01101001}. Each bit $X_i$ is set to $1$ if $i \in S_1$. As another example, let's take $S_2 = \{0,2,4,6\}$ and its corresponding bit representation, \texttt{01010101}. \\
+
+Now, we can use mathematical operations on these bit representations provided by the processor:
+
+\begin{center}
+\begin{table}[ht!]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+Bit Operation & Mathematical Operation & Bit Result & Set result \\ \hline
+\texttt{$\&$}                 & \ms{Intersection} ($\bigcap$)                                    & \ms{01000001}              & $\{0, 6\}$                    \\ \hline
+\texttt{$|$}                 & \ms{Union} ($\bigcup$)                                    & \ms{01111101}              & $\{0,2,3,4,5,6\}$                   \\ \hline
+\texttt{$\wedge$}                 & \ms{Symmetric Difference}                                   & \ms{00111100}             & $\{2,3,4,5\}$                   \\ \hline
+\texttt{$\thicksim$}                & \ms{Complement}                                   & \ms{10010110} (On $S_1$)             & $\{1,2,4,7\}$                   \\ \hline
+\end{tabular}
+\end{table}
+\end{center}
+
+An important point to make is that these bitwise operations are not the same as logical operators (for example, \ms{\&\&}) as logical operators operate on the principle that everything non-zero can be treated as \ms{True}, and this means we will not get a result beyond the first bit (as the result will only be either 0, or 1). Also, logical operators can terminate early for making computations faster. (\ms{!!0x41 $\neq$ 0x41}, but, \ms{!!0x41 = 0x01 (True)}) \\
+An example usage of the bitwise operations is below. We will try to write a \ms{void swap(int* a, int* b)} function without an additional variable. We can achieve this by using XOR.
+
+\begin{center}
+\centering
+\begin{lstlisting}[language=C]
+void swap(int* a, int* b)
+{
+	*a = *a ^ *b; //1
+	*b = *a ^ *b; //2
+	*a = *a ^ *b; //3
+}
+\end{lstlisting}
+\end{center}
+Here's what happens when we execute this, line by line:\\
+\begin{center}
+\begin{table}[ht!]
+\centering
+\begin{tabular}{|l|l|l|}
+\hline
+Line & Value of A                     & Value of B                     \\ \hline
+1    & \ms{$A \oplus B$}              & \ms{$B$}                       \\ \hline
+2    & \ms{$A \oplus B$}              & \ms{$B \oplus B \oplus A = A$} \\ \hline
+3    & \ms{$A \oplus B \oplus A = B$} & \ms{$A$}                       \\ \hline
+End  & \ms{$B$}                         & \ms{$A$}                         \\ \hline
+\end{tabular}
+\end{table}
+\end{center}
+With bit operations, we have saved on some storage. \textit{Yay.}
+\subsubsection{Shifting}
 
 \end{document}
